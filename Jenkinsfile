@@ -1,36 +1,41 @@
 pipeline {
     agent any
-
+    
     environment {
-        IMAGE_NAME = "your-dockerhub-username/java-web-calculator"
+        DOCKER_IMAGE = 'tobaina/java-web-calculator'
     }
 
     stages {
-        stage('Clone Repo') {
+        stage('Checkout') {
             steps {
-                echo 'Code already cloned by Jenkins.'
+                git 'https://github.com/tobaina/JavaWeb3.git'
             }
         }
-
+        
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh 'docker build -t $IMAGE_NAME .'
+                    // Build the Docker image
+                    sh 'docker build -t ${DOCKER_IMAGE} .'
                 }
             }
         }
-
-        stage('Login to Docker Hub') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
-                }
-            }
-        }
-
+        
         stage('Push to Docker Hub') {
             steps {
-                sh 'docker push $IMAGE_NAME'
+                script {
+                    // Push the Docker image to Docker Hub
+                    sh 'docker push ${DOCKER_IMAGE}'
+                }
+            }
+        }
+        
+        stage('Run the Docker Container') {
+            steps {
+                script {
+                    // Run the Docker container
+                    sh 'docker run -d -p 8080:8080 ${DOCKER_IMAGE}'
+                }
             }
         }
     }
